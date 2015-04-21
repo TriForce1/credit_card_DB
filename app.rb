@@ -23,4 +23,22 @@ class CreditCardAPI < Sinatra::Base
 
     {"Card" => params[:card_number], "validated" => c.validate_checksum}.to_json
   end
+
+  post '/api/v1/credit_card' do
+    request_json = request.body.read
+    req = JSON.parse(request_json)
+    creditCard = CreditCard.new(req['number'], req['expiration_date'], req['owner'], req['credit_network'])
+
+    begin
+      unless creditCard.validate_checksum
+        halt 400
+      else
+        op = Operation.new(operation: 'credit_card', parameters: request_json)
+        puts op.save
+        status 201
+      end
+    rescue
+      halt 410
+    end
+  end
 end
